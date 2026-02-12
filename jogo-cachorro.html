@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Salto do Cachorro</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #cfeeff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .game-box {
+      width: min(920px, 95vw);
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    }
+    h1 { margin: 0 0 8px; }
+    .top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .panel { font-weight: bold; display: flex; gap: 14px; }
+    canvas {
+      width: 100%;
+      border: 2px solid #ccc;
+      border-radius: 12px;
+      background: linear-gradient(#f3f9ff 0 64%, #ddc39e 64% 100%);
+      display: block;
+    }
+    .status {
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 8px;
+      background: #fff3cd;
+      color: #7c5f00;
+      font-weight: bold;
+    }
+    .controls {
+      margin-top: 10px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    button {
+      border: 0;
+      border-radius: 999px;
+      padding: 8px 14px;
+      background: #2878ff;
+      color: #fff;
+      font-weight: bold;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="game-box">
+    <div class="top">
+      <h1>🐶 Salto do Cachorro</h1>
+      <div class="panel">
+        <span>Fase: <span id="level">1</span></span>
+        <span>Pontos: <span id="score">0</span>/10</span>
+        <span>Recorde: <span id="best">0</span></span>
+      </div>
+    </div>
+
+    <canvas id="game" width="880" height="360"></canvas>
+
+    <div class="status" id="status">Clique em Iniciar ou pressione Espaço/↑ para jogar.</div>
+
+    <div class="controls">
+      <button id="start">Iniciar</button>
+      <button id="restart">Reiniciar</button>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      const canvas = document.getElementById("game");
+      if (!canvas || !canvas.getContext) {
+        alert("Seu navegador não suporta canvas.");
+        return;
+      }
+
+      const ctx = canvas.getContext("2d");
+      const levelEl = document.getElementById("level");
+      const scoreEl = document.getElementById("score");
+      const bestEl = document.getElementById("best");
+      const statusEl = document.getElementById("status");
+      const startBtn = document.getElementById("start");
+      const restartBtn = document.getElementById("restart");
+
+      const GROUND_Y = 286;
+
+      const dog = {
+        x: 110,
+        y: GROUND_Y,
+        width: 62,
+        height: 50,
+        vy: 0,
+        jumping: false,
+      };
+
+      const state = {
+        running: false,
+        level: 1,
+        score: 0,
+        best: 0,
+        speed: 4.3,
+        gravity: 0.72,
+        jumpForce: -12.5,
+        spawnFrames: 0,
+        spawnEvery: 95,
+      };
+
+      /** @type {{x:number,y:number,r:number,bounce:number,phase:number,passed?:boolean}[]} */
+      let balls = [];
+
+      function updateHUD() {
+        levelEl.textContent = String(state.level);
+        scoreEl.textContent = String(state.score);
+        bestEl.textContent = String(state.best);
+      }
+
+      function resetRound() {
+        state.running = false;
+        state.level = 1;
+        state.score = 0;
+        state.speed = 4.3;
+        state.spawnEvery = 95;
+        state.spawnFrames = 0;
+        balls = [];
+        dog.y = GROUND_Y;
+        dog.vy = 0;
+        dog.jumping = false;
+        statusEl.textContent = "Clique em Iniciar ou pressione Espaço/↑ para jogar.";
+        updateHUD();
+      }
+
+      function startGame() {
+        if (!state.running) {
+          state.running = true;
+          statusEl.textContent = "Desvie das bolas quicando!";
+        }
+      }
+
+      function jump() {
+        startGame();
+        if (!dog.jumping) {
+          dog.vy = state.jumpForce;
+          dog.jumping = true;
+        }
+      }
+
+      function spawnBall() {
+        const r = 14 + Math.random() * 6;
+        balls.push({
+          x: canvas.width + r,
+          y: GROUND_Y - r,
+          r,
+          bounce: 65 + Math.random() * 60,
+          phase: Math.random() * Math.PI,
+        });
+      }
+
+      function updateDog() {
+        dog.y += dog.vy;
+        dog.vy += state.gravity;
+        if (dog.y >= GROUND_Y) {
+          dog.y = GROUND_Y;
+          dog.vy = 0;
+          dog.jumping = false;
+        }
+      }
+
+      function updateBalls() {
+        for (const b of balls) {
+          b.x -= state.speed;
+          b.phase += 0.12 + state.level * 0.008;
+          b.y = GROUND_Y - b.r - Math.abs(Math.sin(b.phase)) * b.bounce;
+        }
+        balls = balls.filter((b) => b.x > -b.r - 10);
+      }
+
+      function checkCollision() {
+        const left = dog.x;
+        const right = dog.x + dog.width;
+        const top = dog.y - dog.height;
+        const bottom = dog.y;
+
+        for (const b of balls) {
+          const cx = Math.max(left, Math.min(b.x, right));
+          const cy = Math.max(top, Math.min(b.y, bottom));
+          const dx = b.x - cx;
+          const dy = b.y - cy;
+          if (dx * dx + dy * dy < b.r * b.r) return true;
+        }
+        return false;
+      }
+
+      function updateScoreAndLevel() {
+        for (const b of balls) {
+          if (!b.passed && b.x + b.r < dog.x) {
+            b.passed = true;
+            state.score += 1;
+            state.best = Math.max(state.best, state.score + (state.level - 1) * 10);
+
+            if (state.score >= 10) {
+              state.level += 1;
+              state.score = 0;
+              state.speed += 0.8;
+              state.spawnEvery = Math.max(45, state.spawnEvery - 10);
+              statusEl.textContent = `Fase ${state.level}! Agora está mais difícil.`;
+            }
+          }
+        }
+      }
+
+      function drawGround() {
+        ctx.strokeStyle = "#8f6f3f";
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(0, GROUND_Y + 2);
+        ctx.lineTo(canvas.width, GROUND_Y + 2);
+        ctx.stroke();
+      }
+
+      function drawDog() {
+        const x = dog.x;
+        const y = dog.y;
+
+        ctx.fillStyle = "#d69a6a";
+        ctx.fillRect(x, y - dog.height, dog.width, dog.height);
+
+        ctx.fillStyle = "#6a3f1f";
+        ctx.fillRect(x + 41, y - dog.height - 12, 20, 12);
+
+        ctx.fillStyle = "#1e1e1e";
+        ctx.beginPath();
+        ctx.arc(x + 46, y - dog.height - 7, 2.8, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = "#d69a6a";
+        ctx.beginPath();
+        ctx.moveTo(x + 10, y - dog.height);
+        ctx.lineTo(x + 28, y - dog.height - 18);
+        ctx.lineTo(x + 34, y - dog.height - 5);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      function drawBall(b) {
+        ctx.fillStyle = "#30b6ff";
+        ctx.beginPath();
+        ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = "#fff";
+        ctx.beginPath();
+        ctx.arc(b.x - b.r / 3, b.y - b.r / 3, b.r / 3.4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      function frame() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawGround();
+
+        if (state.running) {
+          updateDog();
+          updateBalls();
+
+          state.spawnFrames += 1;
+          if (balls.length === 0 || state.spawnFrames >= state.spawnEvery) {
+            spawnBall();
+            state.spawnFrames = 0;
+          }
+
+          if (checkCollision()) {
+            statusEl.textContent = "Você foi atingido! Jogo reiniciado.";
+            setTimeout(resetRound, 600);
+          } else {
+            updateScoreAndLevel();
+          }
+          updateHUD();
+        }
+
+        drawDog();
+        for (const b of balls) drawBall(b);
+
+        requestAnimationFrame(frame);
+      }
+
+      document.addEventListener("keydown", (event) => {
+        if (event.code === "Space" || event.code === "ArrowUp") {
+          event.preventDefault();
+          jump();
+        }
+      });
+
+      canvas.addEventListener("pointerdown", jump);
+      startBtn.addEventListener("click", startGame);
+      restartBtn.addEventListener("click", resetRound);
+
+      resetRound();
+      frame();
+    })();
+  </script>
+</body>
+</html>
