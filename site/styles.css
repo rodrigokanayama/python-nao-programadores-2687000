@@ -1,0 +1,102 @@
+:root {
+  --bg: #fefefe;
+  --text: #111;
+  --link: #1439b2;
+  --muted: #666;
+  --accent: #c40000;
+  --rule: #d7d7d7;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 2rem 1rem 3rem;
+  background: var(--bg);
+  color: var(--text);
+  font-family: Georgia, "Times New Roman", Times, serif;
+  line-height: 1.6;
+}
+
+.page-header,
+main,
+footer {
+  max-width: 680px;
+  margin: 0 auto;
+}
+
+.page-header {
+  border-bottom: 1px solid var(--rule);
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
+}
+
+h1,
+h2 {
+  font-weight: normal;
+  margin: 0;
+}
+
+h1 {
+  font-size: 2.25rem;
+  line-height: 1.1;
+}
+
+h1 a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.tagline {
+  margin: 0.35rem 0 0;
+  color: var(--muted);
+  font-style: italic;
+}
+
+h2 {
+  margin-top: 1.5rem;
+  margin-bottom: 0.6rem;
+  font-size: 1.5rem;
+}
+
+a {
+  color: var(--link);
+}
+
+a:hover {
+  text-decoration-thickness: 2px;
+}
+
+.post-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.post-list li {
+  display: flex;
+  gap: 0.65rem;
+  align-items: baseline;
+  margin-bottom: 0.35rem;
+  flex-wrap: wrap;
+}
+
+time {
+  color: var(--muted);
+  min-width: 6.8rem;
+  font-variant-numeric: tabular-nums;
+}
+
+ul {
+  padding-left: 1.1rem;
+}
+
+footer {
+  margin-top: 2rem;
+  border-top: 1px solid var(--rule);
+  padding-top: 0.8rem;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
