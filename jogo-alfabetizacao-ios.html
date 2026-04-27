@@ -181,12 +181,31 @@
 
   <script>
     const items = [
-      { word: "lago", emoji: "🏞️" }, { word: "gato", emoji: "🐱" }, { word: "pato", emoji: "🦆" },
-      { word: "bola", emoji: "⚽" }, { word: "casa", emoji: "🏠" }, { word: "livro", emoji: "📘" },
-      { word: "flor", emoji: "🌸" }, { word: "maçã", emoji: "🍎" }, { word: "sol", emoji: "☀️" },
-      { word: "lua", emoji: "🌙" }, { word: "peixe", emoji: "🐟" }, { word: "vaca", emoji: "🐄" },
-      { word: "cama", emoji: "🛏️" }, { word: "carro", emoji: "🚗" }, { word: "árvore", emoji: "🌳" },
-      { word: "sapato", emoji: "👟" }, { word: "banana", emoji: "🍌" }, { word: "leite", emoji: "🥛" }
+      { word: "ABACAXI", emoji: "🍍" }, { word: "ABELHA", emoji: "🐝" }, { word: "AVIÃO", emoji: "✈️" }, { word: "ÁRVORE", emoji: "🌳" },
+      { word: "BALA", emoji: "🍬" }, { word: "BALÃO", emoji: "🎈" }, { word: "BANANA", emoji: "🍌" }, { word: "BARCO", emoji: "🚤" },
+      { word: "BICICLETA", emoji: "🚲" }, { word: "BOLO", emoji: "🎂" }, { word: "BOLA", emoji: "⚽" }, { word: "BORBOLETA", emoji: "🦋" },
+      { word: "CACHORRO", emoji: "🐶" }, { word: "CADEIRA", emoji: "🪑" }, { word: "CAFÉ", emoji: "☕" }, { word: "CAIXA", emoji: "📦" },
+      { word: "CAMA", emoji: "🛏️" }, { word: "CAMINHÃO", emoji: "🚚" }, { word: "CANETA", emoji: "🖊️" }, { word: "CARRO", emoji: "🚗" },
+      { word: "CASA", emoji: "🏠" }, { word: "CAVALO", emoji: "🐴" }, { word: "CEBOLA", emoji: "🧅" }, { word: "CENOURA", emoji: "🥕" },
+      { word: "CHAPÉU", emoji: "👒" }, { word: "CHAVE", emoji: "🔑" }, { word: "CHUVA", emoji: "🌧️" }, { word: "COELHO", emoji: "🐰" },
+      { word: "COLHER", emoji: "🥄" }, { word: "CORAÇÃO", emoji: "❤️" }, { word: "CORUJA", emoji: "🦉" }, { word: "DADO", emoji: "🎲" },
+      { word: "DENTE", emoji: "🦷" }, { word: "DINOSSAURO", emoji: "🦖" }, { word: "ELEFANTE", emoji: "🐘" }, { word: "ESCADA", emoji: "🪜" },
+      { word: "ESCOVA", emoji: "🪥" }, { word: "ESCOLA", emoji: "🏫" }, { word: "ESPADA", emoji: "🗡️" }, { word: "ESTRELA", emoji: "⭐" },
+      { word: "FACA", emoji: "🔪" }, { word: "FADA", emoji: "🧚" }, { word: "FOGUETE", emoji: "🚀" }, { word: "FLOR", emoji: "🌸" },
+      { word: "FORMIGA", emoji: "🐜" }, { word: "FRANGO", emoji: "🐔" }, { word: "GALO", emoji: "🐓" }, { word: "GARRAFA", emoji: "🧴" },
+      { word: "GATO", emoji: "🐱" }, { word: "GIRAFA", emoji: "🦒" }, { word: "GLOBO", emoji: "🌍" }, { word: "GOIABA", emoji: "🍈" },
+      { word: "HELICÓPTERO", emoji: "🚁" }, { word: "IGREJA", emoji: "⛪" }, { word: "JACARÉ", emoji: "🐊" }, { word: "JANELA", emoji: "🪟" },
+      { word: "JARRA", emoji: "🏺" }, { word: "JOANINHA", emoji: "🐞" }, { word: "LÁPIS", emoji: "✏️" }, { word: "LARANJA", emoji: "🍊" },
+      { word: "LEÃO", emoji: "🦁" }, { word: "LEITE", emoji: "🥛" }, { word: "LIMÃO", emoji: "🍋" }, { word: "LIVRO", emoji: "📘" },
+      { word: "LUA", emoji: "🌙" }, { word: "MACACO", emoji: "🐵" }, { word: "MAÇÃ", emoji: "🍎" }, { word: "MALA", emoji: "🧳" },
+      { word: "MAMÃO", emoji: "🍈" }, { word: "MELANCIA", emoji: "🍉" }, { word: "MESA", emoji: "🪵" }, { word: "MILHO", emoji: "🌽" },
+      { word: "MONTANHA", emoji: "⛰️" }, { word: "NAVIO", emoji: "🚢" }, { word: "NUVEM", emoji: "☁️" }, { word: "OVO", emoji: "🥚" },
+      { word: "ÓCULOS", emoji: "👓" }, { word: "ORELHA", emoji: "👂" }, { word: "PÃO", emoji: "🍞" }, { word: "PÁSSARO", emoji: "🐦" },
+      { word: "PATO", emoji: "🦆" }, { word: "PEIXE", emoji: "🐟" }, { word: "PENTE", emoji: "🪮" }, { word: "PERA", emoji: "🍐" },
+      { word: "PIANO", emoji: "🎹" }, { word: "PIPA", emoji: "🪁" }, { word: "PIRULITO", emoji: "🍭" }, { word: "POLVO", emoji: "🐙" },
+      { word: "PORTA", emoji: "🚪" }, { word: "PRESENTE", emoji: "🎁" }, { word: "QUEIJO", emoji: "🧀" }, { word: "RELÓGIO", emoji: "⏰" },
+      { word: "SAPATO", emoji: "👟" }, { word: "SAPO", emoji: "🐸" }, { word: "SOL", emoji: "☀️" }, { word: "SORVETE", emoji: "🍦" },
+      { word: "TARTARUGA", emoji: "🐢" }, { word: "TIGRE", emoji: "🐯" }, { word: "TREM", emoji: "🚆" }, { word: "VACA", emoji: "🐄" }
     ];
 
     const totalChallenges = 10;
@@ -197,6 +216,7 @@
     let timer = timePerChallenge;
     let intervalId = null;
     let locked = false;
+    let remainingTargets = [];
 
     const scoreEl = document.getElementById("score");
     const roundEl = document.getElementById("round");
@@ -216,9 +236,13 @@
     };
 
     const pickChallenge = () => {
-      const shuffled = shuffle(items);
-      currentTarget = shuffled[0];
-      return shuffle([currentTarget, shuffled[1], shuffled[2]]);
+      if (remainingTargets.length === 0) {
+        remainingTargets = shuffle(items);
+      }
+
+      currentTarget = remainingTargets.pop();
+      const distractors = shuffle(items.filter((item) => item.word !== currentTarget.word)).slice(0, 2);
+      return shuffle([currentTarget, ...distractors]);
     };
 
     const startTimer = () => {
@@ -291,11 +315,12 @@
       clearInterval(intervalId);
       score = 0;
       currentRound = 1;
+      remainingTargets = shuffle(items);
       renderChallenge();
     };
 
     restartBtn.addEventListener("click", resetGame);
-    renderChallenge();
+    resetGame();
   </script>
 </body>
 </html>
