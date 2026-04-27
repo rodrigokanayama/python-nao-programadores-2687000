@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Jogo de Alfabetização</title>
+  <style>
+    :root {
+      --bg: #f7fbff;
+      --card: #ffffff;
+      --accent: #3b82f6;
+      --accent-dark: #1d4ed8;
+      --ok: #16a34a;
+      --danger: #dc2626;
+      --text: #1f2937;
+      --shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+      --radius: 16px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Comic Sans MS", "Trebuchet MS", Arial, sans-serif;
+      background: linear-gradient(180deg, #dff4ff, var(--bg));
+      min-height: 100vh;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .game {
+      width: min(900px, 100%);
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 24px;
+      border: 4px solid #bfdbfe;
+    }
+
+    h1 {
+      margin: 0 0 6px;
+      text-align: center;
+      font-size: clamp(1.4rem, 2.5vw, 2rem);
+      color: var(--accent-dark);
+    }
+
+    .subtitle {
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 1rem;
+    }
+
+    .status {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      margin-bottom: 20px;
+    }
+
+    .status-item {
+      background: #eff6ff;
+      border: 2px solid #bfdbfe;
+      border-radius: 12px;
+      padding: 10px;
+      text-align: center;
+      font-weight: bold;
+      font-size: 1.05rem;
+    }
+
+    .challenge {
+      text-align: center;
+      margin-bottom: 16px;
+      font-size: clamp(1.2rem, 3vw, 1.8rem);
+    }
+
+    .word {
+      display: inline-block;
+      padding: 6px 14px;
+      margin-top: 8px;
+      border-radius: 999px;
+      background: #dbeafe;
+      color: #1e40af;
+      font-size: clamp(1.6rem, 4vw, 2.2rem);
+      letter-spacing: 1px;
+    }
+
+    .options {
+      display: grid;
+      gap: 14px;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      margin-top: 20px;
+    }
+
+    .option {
+      border: 3px solid #93c5fd;
+      background: #f8fbff;
+      border-radius: 14px;
+      padding: 12px;
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+      min-height: 180px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .option:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 18px rgba(59, 130, 246, 0.25);
+      border-color: var(--accent);
+    }
+
+    .emoji {
+      font-size: clamp(3rem, 8vw, 4.2rem);
+      line-height: 1;
+    }
+
+    .label {
+      font-size: 1.1rem;
+      font-weight: bold;
+      text-transform: capitalize;
+    }
+
+    .message {
+      margin-top: 18px;
+      min-height: 30px;
+      text-align: center;
+      font-size: 1.1rem;
+      font-weight: bold;
+    }
+
+    .ok { color: var(--ok); }
+    .error { color: var(--danger); }
+
+    .footer {
+      margin-top: 20px;
+      text-align: center;
+      font-size: 0.95rem;
+      color: #374151;
+    }
+
+    .btn {
+      margin-top: 12px;
+      border: none;
+      border-radius: 999px;
+      background: var(--accent);
+      color: #fff;
+      font-size: 1rem;
+      font-weight: bold;
+      padding: 10px 18px;
+      cursor: pointer;
+    }
+
+    .btn:hover { background: var(--accent-dark); }
+  </style>
+</head>
+<body>
+  <main class="game">
+    <h1>🌟 Jogo de Leitura e Figuras 🌟</h1>
+    <p class="subtitle">Leia a palavra e clique na figura certa!</p>
+
+    <section class="status">
+      <div class="status-item">✅ Acertos: <span id="score">0</span> / 10</div>
+      <div class="status-item">🎯 Desafio: <span id="round">1</span></div>
+      <div class="status-item">⏱️ Tempo: <span id="timer">60</span>s</div>
+    </section>
+
+    <section class="challenge">
+      Encontre a figura da palavra:
+      <div class="word" id="targetWord">...</div>
+    </section>
+
+    <section class="options" id="options"></section>
+
+    <div class="message" id="message"></div>
+
+    <div class="footer">
+      Se errar ou acabar o tempo, o jogo começa de novo.
+      <br />
+      <button class="btn" id="restartBtn">Recomeçar</button>
+    </div>
+  </main>
+
+  <script>
+    const items = [
+      { word: "lago", emoji: "🏞️" },
+      { word: "gato", emoji: "🐱" },
+      { word: "pato", emoji: "🦆" },
+      { word: "bola", emoji: "⚽" },
+      { word: "casa", emoji: "🏠" },
+      { word: "livro", emoji: "📘" },
+      { word: "flor", emoji: "🌸" },
+      { word: "maçã", emoji: "🍎" },
+      { word: "sol", emoji: "☀️" },
+      { word: "lua", emoji: "🌙" },
+      { word: "peixe", emoji: "🐟" },
+      { word: "vaca", emoji: "🐄" },
+      { word: "cama", emoji: "🛏️" },
+      { word: "carro", emoji: "🚗" },
+      { word: "árvore", emoji: "🌳" },
+      { word: "sapato", emoji: "👟" },
+      { word: "banana", emoji: "🍌" },
+      { word: "leite", emoji: "🥛" }
+    ];
+
+    const totalChallenges = 10;
+    const timePerChallenge = 60;
+
+    let score = 0;
+    let currentRound = 1;
+    let currentTarget = null;
+    let timer = timePerChallenge;
+    let intervalId = null;
+    let locked = false;
+
+    const scoreEl = document.getElementById("score");
+    const roundEl = document.getElementById("round");
+    const timerEl = document.getElementById("timer");
+    const targetWordEl = document.getElementById("targetWord");
+    const optionsEl = document.getElementById("options");
+    const messageEl = document.getElementById("message");
+    const restartBtn = document.getElementById("restartBtn");
+
+    function shuffle(array) {
+      const copy = [...array];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function pickChallenge() {
+      const shuffled = shuffle(items);
+      currentTarget = shuffled[0];
+      const options = shuffle([currentTarget, shuffled[1], shuffled[2]]);
+      return options;
+    }
+
+    function startTimer() {
+      clearInterval(intervalId);
+      timer = timePerChallenge;
+      timerEl.textContent = timer;
+
+      intervalId = setInterval(() => {
+        timer -= 1;
+        timerEl.textContent = timer;
+
+        if (timer <= 0) {
+          clearInterval(intervalId);
+          messageEl.textContent = "⏰ Tempo esgotado! Vamos começar do zero.";
+          messageEl.className = "message error";
+          locked = true;
+          setTimeout(resetGame, 1400);
+        }
+      }, 1000);
+    }
+
+    function renderChallenge() {
+      locked = false;
+      messageEl.textContent = "";
+      messageEl.className = "message";
+
+      const options = pickChallenge();
+      targetWordEl.textContent = currentTarget.word;
+      roundEl.textContent = currentRound;
+      scoreEl.textContent = score;
+
+      optionsEl.innerHTML = "";
+
+      options.forEach((item) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "option";
+        button.setAttribute("aria-label", item.word);
+
+        const emoji = document.createElement("div");
+        emoji.className = "emoji";
+        emoji.textContent = item.emoji;
+
+        const label = document.createElement("div");
+        label.className = "label";
+        label.textContent = item.word;
+
+        button.appendChild(emoji);
+        button.appendChild(label);
+        button.addEventListener("click", () => handleAnswer(item));
+
+        optionsEl.appendChild(button);
+      });
+
+      startTimer();
+    }
+
+    function handleAnswer(selected) {
+      if (locked) return;
+      locked = true;
+      clearInterval(intervalId);
+
+      if (selected.word === currentTarget.word) {
+        score += 1;
+        scoreEl.textContent = score;
+        messageEl.textContent = "🎉 Acertou!";
+        messageEl.className = "message ok";
+
+        if (score >= totalChallenges) {
+          messageEl.textContent = "🏆 Parabéns! Você venceu os 10 desafios!";
+          roundEl.textContent = totalChallenges;
+          return;
+        }
+
+        currentRound += 1;
+        setTimeout(renderChallenge, 900);
+      } else {
+        messageEl.textContent = `❌ Ops! Era ${currentTarget.word}. Vamos recomeçar.`;
+        messageEl.className = "message error";
+        setTimeout(resetGame, 1400);
+      }
+    }
+
+    function resetGame() {
+      clearInterval(intervalId);
+      score = 0;
+      currentRound = 1;
+      renderChallenge();
+    }
+
+    restartBtn.addEventListener("click", resetGame);
+
+    renderChallenge();
+  </script>
+</body>
+</html>
