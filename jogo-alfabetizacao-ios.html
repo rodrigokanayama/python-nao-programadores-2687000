@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <title>Jogo de Alfabetização (iOS)</title>
+  <style>
+    :root {
+      --bg: #f7fbff;
+      --card: #ffffff;
+      --accent: #2563eb;
+      --accent-dark: #1e3a8a;
+      --ok: #15803d;
+      --danger: #dc2626;
+      --text: #111827;
+      --radius: 18px;
+      --safe-top: env(safe-area-inset-top);
+      --safe-right: env(safe-area-inset-right);
+      --safe-bottom: env(safe-area-inset-bottom);
+      --safe-left: env(safe-area-inset-left);
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      margin: 0;
+      font-family: "Book Antiqua", "Palatino Linotype", Palatino, serif;
+      color: var(--text);
+      background: linear-gradient(180deg, #e0f2fe, var(--bg));
+      min-height: 100dvh;
+      padding:
+        calc(12px + var(--safe-top))
+        calc(12px + var(--safe-right))
+        calc(12px + var(--safe-bottom))
+        calc(12px + var(--safe-left));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .game {
+      width: min(760px, 100%);
+      background: var(--card);
+      border: 3px solid #bfdbfe;
+      border-radius: var(--radius);
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
+      padding: 16px;
+    }
+
+    h1 {
+      text-align: center;
+      margin: 0;
+      color: var(--accent-dark);
+      font-size: clamp(1.4rem, 5vw, 2rem);
+    }
+
+    .subtitle {
+      margin: 8px 0 14px;
+      text-align: center;
+      font-size: 1rem;
+    }
+
+    .status {
+      display: grid;
+      gap: 8px;
+      grid-template-columns: 1fr;
+      margin-bottom: 16px;
+    }
+
+    .status-item {
+      text-align: center;
+      background: #eff6ff;
+      border: 2px solid #bfdbfe;
+      border-radius: 12px;
+      padding: 8px;
+      font-weight: bold;
+    }
+
+    .challenge {
+      text-align: center;
+      font-size: 1.2rem;
+    }
+
+    .word {
+      margin-top: 8px;
+      display: inline-block;
+      padding: 6px 14px;
+      background: #dbeafe;
+      color: #1e3a8a;
+      border-radius: 999px;
+      font-size: clamp(1.6rem, 7vw, 2.2rem);
+    }
+
+    .options {
+      margin-top: 16px;
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .option {
+      border: 3px solid #93c5fd;
+      border-radius: 14px;
+      background: #f8fbff;
+      min-height: 130px;
+      display: grid;
+      place-items: center;
+      font-size: clamp(2.4rem, 10vw, 4rem);
+      cursor: pointer;
+      touch-action: manipulation;
+      user-select: none;
+    }
+
+    .option:active {
+      transform: scale(0.98);
+      border-color: var(--accent);
+    }
+
+    .message {
+      margin-top: 12px;
+      min-height: 24px;
+      text-align: center;
+      font-size: 1.08rem;
+      font-weight: bold;
+    }
+
+    .ok { color: var(--ok); }
+    .error { color: var(--danger); }
+
+    .footer {
+      margin-top: 12px;
+      text-align: center;
+      font-size: 0.95rem;
+    }
+
+    .btn {
+      margin-top: 10px;
+      border: none;
+      border-radius: 999px;
+      background: var(--accent);
+      color: #fff;
+      font-size: 1rem;
+      font-weight: bold;
+      padding: 10px 16px;
+      touch-action: manipulation;
+    }
+
+    @media (max-width: 520px) {
+      .options { grid-template-columns: 1fr; }
+      .option { min-height: 120px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="game">
+    <h1>🍎 Jogo de Leitura (iOS)</h1>
+    <p class="subtitle">Leia a palavra e toque na figura correta.</p>
+
+    <section class="status">
+      <div class="status-item">✅ Acertos: <span id="score">0</span> / 10</div>
+      <div class="status-item">🎯 Desafio: <span id="round">1</span></div>
+      <div class="status-item">⏱️ Tempo: <span id="timer">60</span>s</div>
+    </section>
+
+    <section class="challenge">
+      Encontre a figura da palavra:
+      <div class="word" id="targetWord">...</div>
+    </section>
+
+    <section class="options" id="options"></section>
+    <div class="message" id="message"></div>
+
+    <div class="footer">
+      Se errar ou o tempo acabar, o jogo reinicia.
+      <br />
+      <button class="btn" id="restartBtn" type="button">Recomeçar</button>
+    </div>
+  </main>
+
+  <script>
+    const items = [
+      { word: "ABACAXI", emoji: "🍍" }, { word: "ABELHA", emoji: "🐝" }, { word: "AVIÃO", emoji: "✈️" }, { word: "ÁRVORE", emoji: "🌳" },
+      { word: "BALA", emoji: "🍬" }, { word: "BALÃO", emoji: "🎈" }, { word: "BANANA", emoji: "🍌" }, { word: "BARCO", emoji: "🚤" },
+      { word: "BICICLETA", emoji: "🚲" }, { word: "BOLO", emoji: "🎂" }, { word: "BOLA", emoji: "⚽" }, { word: "BORBOLETA", emoji: "🦋" },
+      { word: "CACHORRO", emoji: "🐶" }, { word: "CADEIRA", emoji: "🪑" }, { word: "CAFÉ", emoji: "☕" }, { word: "CAIXA", emoji: "📦" },
+      { word: "CAMA", emoji: "🛏️" }, { word: "CAMINHÃO", emoji: "🚚" }, { word: "CANETA", emoji: "🖊️" }, { word: "CARRO", emoji: "🚗" },
+      { word: "CASA", emoji: "🏠" }, { word: "CAVALO", emoji: "🐴" }, { word: "CEBOLA", emoji: "🧅" }, { word: "CENOURA", emoji: "🥕" },
+      { word: "CHAPÉU", emoji: "👒" }, { word: "CHAVE", emoji: "🔑" }, { word: "CHUVA", emoji: "🌧️" }, { word: "COELHO", emoji: "🐰" },
+      { word: "COLHER", emoji: "🥄" }, { word: "CORAÇÃO", emoji: "❤️" }, { word: "CORUJA", emoji: "🦉" }, { word: "DADO", emoji: "🎲" },
+      { word: "DENTE", emoji: "🦷" }, { word: "DINOSSAURO", emoji: "🦖" }, { word: "ELEFANTE", emoji: "🐘" }, { word: "ESCADA", emoji: "🪜" },
+      { word: "ESCOVA", emoji: "🪥" }, { word: "ESCOLA", emoji: "🏫" }, { word: "ESPADA", emoji: "🗡️" }, { word: "ESTRELA", emoji: "⭐" },
+      { word: "FACA", emoji: "🔪" }, { word: "FADA", emoji: "🧚" }, { word: "FOGUETE", emoji: "🚀" }, { word: "FLOR", emoji: "🌸" },
+      { word: "FORMIGA", emoji: "🐜" }, { word: "FRANGO", emoji: "🐔" }, { word: "GALO", emoji: "🐓" }, { word: "GARRAFA", emoji: "🧴" },
+      { word: "GATO", emoji: "🐱" }, { word: "GIRAFA", emoji: "🦒" }, { word: "GLOBO", emoji: "🌍" }, { word: "GOIABA", emoji: "🍈" },
+      { word: "HELICÓPTERO", emoji: "🚁" }, { word: "IGREJA", emoji: "⛪" }, { word: "JACARÉ", emoji: "🐊" }, { word: "JANELA", emoji: "🪟" },
+      { word: "JARRA", emoji: "🏺" }, { word: "JOANINHA", emoji: "🐞" }, { word: "LÁPIS", emoji: "✏️" }, { word: "LARANJA", emoji: "🍊" },
+      { word: "LEÃO", emoji: "🦁" }, { word: "LEITE", emoji: "🥛" }, { word: "LIMÃO", emoji: "🍋" }, { word: "LIVRO", emoji: "📘" },
+      { word: "LUA", emoji: "🌙" }, { word: "MACACO", emoji: "🐵" }, { word: "MAÇÃ", emoji: "🍎" }, { word: "MALA", emoji: "🧳" },
+      { word: "MAMÃO", emoji: "🍈" }, { word: "MELANCIA", emoji: "🍉" }, { word: "MESA", emoji: "🪵" }, { word: "MILHO", emoji: "🌽" },
+      { word: "MONTANHA", emoji: "⛰️" }, { word: "NAVIO", emoji: "🚢" }, { word: "NUVEM", emoji: "☁️" }, { word: "OVO", emoji: "🥚" },
+      { word: "ÓCULOS", emoji: "👓" }, { word: "ORELHA", emoji: "👂" }, { word: "PÃO", emoji: "🍞" }, { word: "PÁSSARO", emoji: "🐦" },
+      { word: "PATO", emoji: "🦆" }, { word: "PEIXE", emoji: "🐟" }, { word: "PENTE", emoji: "🪮" }, { word: "PERA", emoji: "🍐" },
+      { word: "PIANO", emoji: "🎹" }, { word: "PIPA", emoji: "🪁" }, { word: "PIRULITO", emoji: "🍭" }, { word: "POLVO", emoji: "🐙" },
+      { word: "PORTA", emoji: "🚪" }, { word: "PRESENTE", emoji: "🎁" }, { word: "QUEIJO", emoji: "🧀" }, { word: "RELÓGIO", emoji: "⏰" },
+      { word: "SAPATO", emoji: "👟" }, { word: "SAPO", emoji: "🐸" }, { word: "SOL", emoji: "☀️" }, { word: "SORVETE", emoji: "🍦" },
+      { word: "TARTARUGA", emoji: "🐢" }, { word: "TIGRE", emoji: "🐯" }, { word: "TREM", emoji: "🚆" }, { word: "VACA", emoji: "🐄" }
+    ];
+
+    const totalChallenges = 10;
+    const timePerChallenge = 60;
+    let score = 0;
+    let currentRound = 1;
+    let currentTarget = null;
+    let timer = timePerChallenge;
+    let intervalId = null;
+    let locked = false;
+    let remainingTargets = [];
+
+    const scoreEl = document.getElementById("score");
+    const roundEl = document.getElementById("round");
+    const timerEl = document.getElementById("timer");
+    const targetWordEl = document.getElementById("targetWord");
+    const optionsEl = document.getElementById("options");
+    const messageEl = document.getElementById("message");
+    const restartBtn = document.getElementById("restartBtn");
+
+    const shuffle = (arr) => {
+      const copy = [...arr];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    };
+
+    const pickChallenge = () => {
+      if (remainingTargets.length === 0) {
+        remainingTargets = shuffle(items);
+      }
+
+      currentTarget = remainingTargets.pop();
+      const distractors = shuffle(items.filter((item) => item.word !== currentTarget.word)).slice(0, 2);
+      return shuffle([currentTarget, ...distractors]);
+    };
+
+    const startTimer = () => {
+      clearInterval(intervalId);
+      timer = timePerChallenge;
+      timerEl.textContent = timer;
+
+      intervalId = setInterval(() => {
+        timer -= 1;
+        timerEl.textContent = timer;
+        if (timer <= 0) {
+          clearInterval(intervalId);
+          locked = true;
+          messageEl.textContent = "⏰ Tempo esgotado! Recomeçando...";
+          messageEl.className = "message error";
+          setTimeout(resetGame, 1200);
+        }
+      }, 1000);
+    };
+
+    const renderChallenge = () => {
+      locked = false;
+      messageEl.textContent = "";
+      messageEl.className = "message";
+      scoreEl.textContent = score;
+      roundEl.textContent = currentRound;
+      const options = pickChallenge();
+      targetWordEl.textContent = currentTarget.word;
+      optionsEl.innerHTML = "";
+
+      options.forEach((item) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "option";
+        button.setAttribute("aria-label", item.word);
+        button.textContent = item.emoji;
+        button.addEventListener("click", () => handleAnswer(item));
+        optionsEl.appendChild(button);
+      });
+
+      startTimer();
+    };
+
+    const handleAnswer = (selected) => {
+      if (locked) return;
+      locked = true;
+      clearInterval(intervalId);
+
+      if (selected.word === currentTarget.word) {
+        score += 1;
+        scoreEl.textContent = score;
+        messageEl.textContent = "🎉 Acertou!";
+        messageEl.className = "message ok";
+
+        if (score >= totalChallenges) {
+          messageEl.textContent = "🏆 Você venceu os 10 desafios!";
+          return;
+        }
+
+        currentRound += 1;
+        setTimeout(renderChallenge, 700);
+      } else {
+        messageEl.textContent = `❌ Era ${currentTarget.word}. Vamos recomeçar.`;
+        messageEl.className = "message error";
+        setTimeout(resetGame, 1200);
+      }
+    };
+
+    const resetGame = () => {
+      clearInterval(intervalId);
+      score = 0;
+      currentRound = 1;
+      remainingTargets = shuffle(items);
+      renderChallenge();
+    };
+
+    restartBtn.addEventListener("click", resetGame);
+    resetGame();
+  </script>
+</body>
+</html>
