@@ -21,7 +21,7 @@
 
     body {
       margin: 0;
-      font-family: "Comic Sans MS", "Trebuchet MS", Arial, sans-serif;
+      font-family: "Book Antiqua", "Palatino Linotype", Palatino, serif;
       background: linear-gradient(180deg, #dff4ff, var(--bg));
       min-height: 100vh;
       color: var(--text);
@@ -118,12 +118,6 @@
     .emoji {
       font-size: clamp(3rem, 8vw, 4.2rem);
       line-height: 1;
-    }
-
-    .label {
-      font-size: 1.1rem;
-      font-weight: bold;
-      text-transform: capitalize;
     }
 
     .message {
@@ -283,12 +277,7 @@
         emoji.className = "emoji";
         emoji.textContent = item.emoji;
 
-        const label = document.createElement("div");
-        label.className = "label";
-        label.textContent = item.word;
-
         button.appendChild(emoji);
-        button.appendChild(label);
         button.addEventListener("click", () => handleAnswer(item));
 
         optionsEl.appendChild(button);
