@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <title>Jogo de Alfabetização (iPadOS)</title>
+  <style>
+    :root {
+      --bg: #f5fbff;
+      --card: #ffffff;
+      --blue: #2563eb;
+      --blue-dark: #1e3a8a;
+      --ok: #15803d;
+      --err: #dc2626;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Book Antiqua", "Palatino Linotype", Palatino, serif;
+      background: linear-gradient(180deg, #dbeafe, var(--bg));
+      color: #111827;
+      min-height: 100vh;
+      padding: 14px;
+    }
+
+    .wrap {
+      width: min(900px, 100%);
+      margin: 0 auto;
+      background: var(--card);
+      border: 3px solid #bfdbfe;
+      border-radius: 16px;
+      box-shadow: 0 8px 20px rgba(0,0,0,.10);
+      padding: 18px;
+    }
+
+    h1 {
+      margin: 0;
+      text-align: center;
+      color: var(--blue-dark);
+      font-size: clamp(1.5rem, 4vw, 2.2rem);
+    }
+
+    .subtitle {
+      text-align: center;
+      margin: 8px 0 16px;
+      font-size: 1.05rem;
+    }
+
+    .status {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .status > div {
+      background: #eff6ff;
+      border: 2px solid #bfdbfe;
+      border-radius: 10px;
+      text-align: center;
+      padding: 10px;
+      font-weight: 700;
+    }
+
+    .challenge { text-align: center; font-size: 1.25rem; }
+
+    .word {
+      margin-top: 8px;
+      display: inline-block;
+      font-size: clamp(1.8rem, 6vw, 2.4rem);
+      background: #dbeafe;
+      color: #1e3a8a;
+      border-radius: 999px;
+      padding: 6px 18px;
+    }
+
+    .options {
+      margin-top: 16px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .option {
+      min-height: 160px;
+      border: 3px solid #93c5fd;
+      border-radius: 14px;
+      background: #f8fbff;
+      font-size: clamp(3rem, 8vw, 4.2rem);
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+
+    .option:active { transform: scale(0.98); border-color: var(--blue); }
+
+    .message {
+      margin-top: 14px;
+      min-height: 28px;
+      text-align: center;
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+
+    .ok { color: var(--ok); }
+    .err { color: var(--err); }
+
+    .footer {
+      margin-top: 8px;
+      text-align: center;
+      font-size: .95rem;
+    }
+
+    button.restart {
+      margin-top: 10px;
+      border: none;
+      border-radius: 999px;
+      background: var(--blue);
+      color: #fff;
+      font: inherit;
+      font-weight: 700;
+      padding: 10px 16px;
+      cursor: pointer;
+    }
+
+    @media (max-width: 720px) {
+      .status, .options { grid-template-columns: 1fr; }
+      .option { min-height: 120px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <h1>📚 Jogo de Leitura (iPadOS)</h1>
+    <p class="subtitle">Leia a palavra e toque na figura certa.</p>
+
+    <section class="status">
+      <div>✅ Acertos: <span id="score">0</span> / 10</div>
+      <div>🎯 Desafio: <span id="round">1</span></div>
+      <div>⏱️ Tempo: <span id="timer">60</span>s</div>
+    </section>
+
+    <section class="challenge">
+      Encontre a figura da palavra:
+      <div id="target" class="word">...</div>
+    </section>
+
+    <section id="options" class="options"></section>
+    <div id="message" class="message"></div>
+
+    <div class="footer">
+      Se errar ou acabar o tempo, recomeça do início.
+      <br />
+      <button id="restart" class="restart" type="button">Recomeçar</button>
+    </div>
+  </main>
+
+  <script>
+    var items = [
+      { word: "lago", emoji: "🏞️" }, { word: "gato", emoji: "🐱" }, { word: "pato", emoji: "🦆" },
+      { word: "bola", emoji: "⚽" }, { word: "casa", emoji: "🏠" }, { word: "livro", emoji: "📘" },
+      { word: "flor", emoji: "🌸" }, { word: "maçã", emoji: "🍎" }, { word: "sol", emoji: "☀️" },
+      { word: "lua", emoji: "🌙" }, { word: "peixe", emoji: "🐟" }, { word: "vaca", emoji: "🐄" },
+      { word: "cama", emoji: "🛏️" }, { word: "carro", emoji: "🚗" }, { word: "árvore", emoji: "🌳" },
+      { word: "sapato", emoji: "👟" }, { word: "banana", emoji: "🍌" }, { word: "leite", emoji: "🥛" }
+    ];
+
+    var totalChallenges = 10;
+    var timePerChallenge = 60;
+    var score = 0;
+    var round = 1;
+    var currentTarget = null;
+    var timer = timePerChallenge;
+    var timerId = null;
+    var locked = false;
+
+    var scoreEl = document.getElementById('score');
+    var roundEl = document.getElementById('round');
+    var timerEl = document.getElementById('timer');
+    var targetEl = document.getElementById('target');
+    var optionsEl = document.getElementById('options');
+    var msgEl = document.getElementById('message');
+    var restartEl = document.getElementById('restart');
+
+    function shuffle(arr) {
+      var copy = arr.slice();
+      for (var i = copy.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var temp = copy[i];
+        copy[i] = copy[j];
+        copy[j] = temp;
+      }
+      return copy;
+    }
+
+    function buildChallenge() {
+      var shuffled = shuffle(items);
+      currentTarget = shuffled[0];
+      return shuffle([currentTarget, shuffled[1], shuffled[2]]);
+    }
+
+    function startTimer() {
+      clearInterval(timerId);
+      timer = timePerChallenge;
+      timerEl.textContent = timer;
+
+      timerId = setInterval(function () {
+        timer -= 1;
+        timerEl.textContent = timer;
+        if (timer <= 0) {
+          clearInterval(timerId);
+          locked = true;
+          msgEl.textContent = '⏰ Tempo esgotado! Recomeçando...';
+          msgEl.className = 'message err';
+          setTimeout(resetGame, 1200);
+        }
+      }, 1000);
+    }
+
+    function renderChallenge() {
+      locked = false;
+      msgEl.textContent = '';
+      msgEl.className = 'message';
+      scoreEl.textContent = score;
+      roundEl.textContent = round;
+
+      var options = buildChallenge();
+      targetEl.textContent = currentTarget.word;
+      optionsEl.innerHTML = '';
+
+      options.forEach(function (item) {
+        var button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'option';
+        button.setAttribute('aria-label', item.word);
+        button.textContent = item.emoji;
+        button.addEventListener('click', function () {
+          answer(item);
+        });
+        optionsEl.appendChild(button);
+      });
+
+      startTimer();
+    }
+
+    function answer(item) {
+      if (locked) return;
+      locked = true;
+      clearInterval(timerId);
+
+      if (item.word === currentTarget.word) {
+        score += 1;
+        msgEl.textContent = '🎉 Acertou!';
+        msgEl.className = 'message ok';
+
+        if (score >= totalChallenges) {
+          scoreEl.textContent = score;
+          msgEl.textContent = '🏆 Parabéns! Você venceu os 10 desafios!';
+          return;
+        }
+
+        round += 1;
+        setTimeout(renderChallenge, 700);
+      } else {
+        msgEl.textContent = '❌ Vamos recomeçar.';
+        msgEl.className = 'message err';
+        setTimeout(resetGame, 1200);
+      }
+    }
+
+    function resetGame() {
+      clearInterval(timerId);
+      score = 0;
+      round = 1;
+      renderChallenge();
+    }
+
+    restartEl.addEventListener('click', resetGame);
+    renderChallenge();
+  </script>
+</body>
+</html>
